@@ -1,0 +1,182 @@
+[
+  {
+    "account_id": "100000000001",
+    "name": "core",
+    "business_unit": "BU-A",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000003",
+    "name": "network",
+    "business_unit": "BU-A",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000002",
+    "name": "it-core-sandbox",
+    "business_unit": "BU-A",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000004",
+    "name": "was-prod",
+    "business_unit": "BU-A",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000010",
+    "name": "was-preprod",
+    "business_unit": "BU-A",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000020",
+    "name": "lms1-sandbox",
+    "business_unit": "BU-A",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000016",
+    "name": "prod-lms",
+    "business_unit": "BU-A",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000014",
+    "name": "lms-sandbox",
+    "business_unit": "BU-A",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000018",
+    "name": "app-a-sandbox",
+    "business_unit": "BU-B",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000021",
+    "name": "app-a",
+    "business_unit": "BU-B",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000008",
+    "name": "cicd",
+    "business_unit": "BU-B",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000023",
+    "name": "app-b-sandbox",
+    "business_unit": "BU-C",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000022",
+    "name": "app-b-prod",
+    "business_unit": "BU-C",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000028",
+    "name": "app-c-prod",
+    "business_unit": "BU-D",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000011",
+    "name": "app-c-sandbox",
+    "business_unit": "BU-D",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000029",
+    "name": "app-c-cicd-sandbox",
+    "business_unit": "BU-D",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000009",
+    "name": "ibe",
+    "business_unit": "BU-D",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000012",
+    "name": "ecomm-ibe-sandbox",
+    "business_unit": "BU-A",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000007",
+    "name": "app-d-sandbox",
+    "business_unit": "BU-D",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000006",
+    "name": "app-d-prod",
+    "business_unit": "BU-D",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000024",
+    "name": "ecomm-prod",
+    "business_unit": "BU-A",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000017",
+    "name": "ecomm-sandbox",
+    "business_unit": "BU-A",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000015",
+    "name": "bi-prod",
+    "business_unit": "BU-A",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000005",
+    "name": "bi-sandbox",
+    "business_unit": "BU-A",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000027",
+    "name": "hr-system",
+    "business_unit": "Other",
+    "core_scope": false
+  },
+  {
+    "account_id": "100000000031",
+    "name": "cdp-prod",
+    "business_unit": "Other",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000013",
+    "name": "cdp-sandbox",
+    "business_unit": "Other",
+    "core_scope": true
+  },
+  {
+    "account_id": "100000000025",
+    "name": "100000000025",
+    "business_unit": "Other",
+    "core_scope": false
+  },
+  {
+    "account_id": "100000000030",
+    "name": "100000000030",
+    "business_unit": "Other",
+    "core_scope": false
+  },
+  {
+    "account_id": "100000000019",
+    "name": "100000000019",
+    "business_unit": "Other",
+    "core_scope": false
+  }
+]

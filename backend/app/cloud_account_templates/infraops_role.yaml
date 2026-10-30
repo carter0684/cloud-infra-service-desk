@@ -1,0 +1,52 @@
+# Cloud Infra Job Portal - cross-account read-only role for AWS account {{ACCOUNT_ID}}
+#
+# Deploy this stack IN account {{ACCOUNT_ID}} (CloudFormation console: Create stack ->
+# Upload a template file; or: aws cloudformation deploy --template-file <file>
+# --stack-name JobPortal-InfraOps-Role --capabilities CAPABILITY_NAMED_IAM).
+# Then return to the Portal's Cloud Accounts page and press Connect.
+#
+# What it creates: ONE IAM role that
+#   - can only be assumed by the Portal's task role, and only with the External ID below;
+#   - has the AWS managed ReadOnlyAccess policy and nothing else (no write access).
+# To give the role more or less access, change it in this account's IAM console.
+# Note: ReadOnlyAccess can read data (for example S3 objects and DynamoDB items),
+# not only resource details. It does not include secretsmanager:GetSecretValue.
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Cloud Infra Job Portal - read-only cross-account role for AWS account {{ACCOUNT_ID}}"
+Parameters:
+  MaxSessionDuration:
+    Type: Number
+    Default: 3600
+    MinValue: 3600
+    MaxValue: 43200
+    Description: "Maximum session length in seconds for the role (the Portal asks for 3600)."
+Resources:
+  InfraOpsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: "{{ROLE_NAME}}"
+      Description: "Read-only access for the Cloud Infra Job Portal"
+      MaxSessionDuration:
+        Ref: MaxSessionDuration
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: "{{TASK_ROLE_ARN}}"
+            Action: "sts:AssumeRole"
+            Condition:
+              StringEquals:
+                "sts:ExternalId": "{{EXTERNAL_ID}}"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/ReadOnlyAccess"
+      Tags:
+        - Key: ManagedBy
+          Value: JobPortal
+Outputs:
+  RoleArn:
+    Description: "ARN of the role the Portal will assume"
+    Value:
+      Fn::GetAtt:
+        - InfraOpsRole
+        - Arn

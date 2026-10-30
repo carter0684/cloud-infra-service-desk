@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+job_portal.db
+.git/
+.venv/
+venv/
+*.egg-info/
+tests/

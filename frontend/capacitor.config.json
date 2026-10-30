@@ -1,0 +1,33 @@
+{
+  "appId": "com.example.cloudinfraservicedesk",
+  "appName": "Cloud Infra Service Desk",
+  "webDir": "dist",
+  "server": {
+    "url": "https://portal.example.com",
+    "androidScheme": "https",
+    "cleartext": false,
+    "errorPath": "offline.html",
+    "allowNavigation": [
+      "portal.example.com",
+      "portal-api.example.com",
+      "*.example.com",
+      "*.cloudfront.net",
+      "login.microsoftonline.com",
+      "*.login.microsoftonline.com",
+      "*.microsoftonline.com",
+      "login.microsoft.com",
+      "login.live.com",
+      "account.live.com",
+      "graph.microsoft.com",
+      "*.*.elb.amazonaws.com"
+    ]
+  },
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "App": {
+      "disableBackButtonHandler": true
+    }
+  }
+}

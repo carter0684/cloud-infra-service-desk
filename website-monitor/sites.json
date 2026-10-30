@@ -1,0 +1,15 @@
+{
+  "intervalMinutes": 5,
+  "centralRegion": "ap-southeast-1",
+  "sites": [
+    { "id": "example-home", "name": "Example Home", "url": "https://www.example.com/" },
+    { "id": "example-shop", "name": "Example Shop", "url": "https://shop.example.com/" }
+  ],
+  "regions": [
+    { "key": "us", "label": "US (N. Virginia)", "awsRegion": "us-east-1" },
+    { "key": "uk", "label": "UK (London)", "awsRegion": "eu-west-2" },
+    { "key": "sg", "label": "Singapore", "awsRegion": "ap-southeast-1" },
+    { "key": "in", "label": "Mumbai", "awsRegion": "ap-south-1" },
+    { "key": "jp", "label": "Tokyo", "awsRegion": "ap-northeast-1" }
+  ]
+}

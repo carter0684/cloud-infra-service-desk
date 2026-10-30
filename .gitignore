@@ -1,0 +1,106 @@
+# ===== Secrets / credentials — NEVER commit =====
+.env
+.env.*
+!.env.example
+.aws-deploy/
+*.pem
+*.pfx
+*.key
+*_clientid.txt
+*_tenant.txt
+_get_azure_ids.ps1.out
+credentials
+config
+*credentials*.json
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+*.egg
+build/
+dist/
+
+# Local-dev-only SQLite database (ENV=local persistence backend, see
+# backend/app/database.py) — never committed, purely developer-machine
+# state that must not leak into git history.
+backend/job_portal.db
+
+# ===== Node / frontend =====
+node_modules/
+frontend/dist/
+frontend/dist-ssr/
+*.local
+
+# Desktop app auto-updater release staging — built installers (.exe),
+# signatures (.sig), and latest.json manifests are generated release
+# artifacts, not source; never committed (mirrors frontend/dist/ above).
+frontend/desktop-updates-staging/
+
+# ===== Mobile/desktop app shells (Android/Tauri/iOS) — build outputs & =====
+# ===== native toolchain caches only; source config IS committed.       =====
+frontend/android/build/
+frontend/android/app/build/
+frontend/android/.gradle/
+frontend/android/capacitor-cordova-android-plugins/build/
+frontend/android/local.properties
+frontend/src-tauri/target/
+frontend/src-tauri/gen/
+frontend/ios/App/build/
+frontend/ios/App/Pods/
+frontend/ios/App/output/
+frontend/ios/App/App/public/
+frontend/ios/DerivedData/
+frontend/ios/App/App.xcworkspace/xcuserdata/
+frontend/ios/App/App.xcodeproj/xcuserdata/
+frontend/ios/capacitor-cordova-ios-plugins/
+
+# Android signing material + release outputs — NEVER commit
+frontend/android/keystore.properties
+frontend/android-release/
+*.jks
+*.keystore
+*.apk
+*.aab
+
+# ===== CDK =====
+infra-cdk/cdk.out/
+infra-cdk/.cdk.staging/
+cdk.context.json
+
+# ===== Zips / build artifacts =====
+*.zip
+*.tar.gz
+
+# ===== Logs / temp diagnostics =====
+*.log
+_deploy_frontend_log.txt
+_nv_test.json
+_redeploy_result.json
+_redeploy_status.json
+
+# ===== OS / editor junk =====
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# ===== Deploy / diagnostic leftovers (local only) =====
+# `cdk deploy --output cdk.out.<name>` staging dirs, deploy/build logs and one-off
+# probe output. They can hold account IDs, IPs and e-mail addresses, so they stay local.
+infra-cdk/cdk.out*/
+infra-cdk/_*.txt
+infra-cdk/cdk_*_out*.txt
+infra-cdk/build-status.txt
+infra-cdk/current-status2.json
+infra-cdk/flowlog_check.txt
+infra-cdk/profiles.txt
+frontend/_publish_release_log.txt
+backend/out*.txt
+/_push.txt
+/_waf_result.json
+/JOB_PORTAL_REVIEW.pdf

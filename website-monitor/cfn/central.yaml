@@ -1,0 +1,98 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Website monitor - central stack. Private results bucket (probe results, screenshots and the
+  monitored site list) and the SNS topic used for down/recovery email alerts.
+  The UI is the Cloud Infra Service Desk portal (Monitoring > Website Monitoring), which reads
+  this bucket through its ECS task role; nothing here is publicly reachable.
+
+Parameters:
+  AlertEmail:
+    Type: String
+    Description: Email address that receives DOWN / RECOVERED alerts (must confirm the SNS subscription).
+    AllowedPattern: '^[^@\s]+@[^@\s]+\.[^@\s]+$'
+  AlertEmail2:
+    Type: String
+    Default: ''
+    Description: Optional second alert recipient.
+    AllowedPattern: '^([^@\s]+@[^@\s]+\.[^@\s]+)?$'
+  AlertEmail3:
+    Type: String
+    Default: ''
+    Description: Optional third alert recipient.
+    AllowedPattern: '^([^@\s]+@[^@\s]+\.[^@\s]+)?$'
+
+Conditions:
+  HasAlertEmail2: !Not [!Equals [!Ref AlertEmail2, '']]
+  HasAlertEmail3: !Not [!Equals [!Ref AlertEmail3, '']]
+
+Resources:
+  CentralBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'webmon-central-${AWS::AccountId}-${AWS::Region}'
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  CentralBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref CentralBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:*'
+            Resource:
+              - !GetAtt CentralBucket.Arn
+              - !Sub '${CentralBucket.Arn}/*'
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
+
+  AlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: webmon-alerts
+      DisplayName: Website Monitor
+      KmsMasterKeyId: alias/aws/sns
+
+  AlertSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref AlertTopic
+      Protocol: email
+      Endpoint: !Ref AlertEmail
+
+  AlertSubscription2:
+    Type: AWS::SNS::Subscription
+    Condition: HasAlertEmail2
+    Properties:
+      TopicArn: !Ref AlertTopic
+      Protocol: email
+      Endpoint: !Ref AlertEmail2
+
+  AlertSubscription3:
+    Type: AWS::SNS::Subscription
+    Condition: HasAlertEmail3
+    Properties:
+      TopicArn: !Ref AlertTopic
+      Protocol: email
+      Endpoint: !Ref AlertEmail3
+
+Outputs:
+  CentralBucketName:
+    Value: !Ref CentralBucket
+  AlertTopicArn:
+    Value: !Ref AlertTopic

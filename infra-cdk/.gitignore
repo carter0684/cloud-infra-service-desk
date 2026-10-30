@@ -1,0 +1,21 @@
+*.swp
+__pycache__
+.pytest_cache
+.venv
+*.egg-info
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+# Isolated AWS credentials for this project (contains live secrets - never commit)
+.aws-deploy/
+
+# Self-signed cert/key artifacts and other local-only secrets
+*.pfx
+*.pem
+_tenant.txt
+_clientid.txt
+
+# Your deployment settings (copy config.example.json)
+config.json

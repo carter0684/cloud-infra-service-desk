@@ -1,0 +1,230 @@
+/* Phone / small-tablet layer.
+ *
+ * Almost every page in the portal is laid out with inline styles (fixed
+ * pixel widths, 2/3/4-column grids, space-between header rows), which a
+ * stylesheet can only beat with !important. Rather than editing ~30 pages
+ * one by one, the rules below target the *shapes* those inline styles take
+ * (attribute selectors on the style attribute) and adapt them for narrow
+ * screens. Desktop is untouched: everything sits inside the media query.
+ *
+ * 768px matches MOBILE_BREAKPOINT in App.jsx (the point where the sidebar
+ * turns into an off-canvas drawer). Checked at 360 (Galaxy S23), 375
+ * (iPhone SE), 393 (iPhone 15), 412 (Galaxy S24 Ultra) and 430 (iPhone Pro
+ * Max) CSS pixels wide.
+ */
+
+@media (max-width: 768px) {
+  /* ── Page frame ─────────────────────────────────────────────────── */
+
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+  /* Last line of defence: a stray wide element must never make the whole
+     page scroll sideways (on a phone it also shrinks the page and pushes
+     fixed overlays off-screen). Real overflow is fixed by the rules below. */
+  html, body { max-width: 100%; overflow-x: hidden; }
+
+  /* The browser's default 8px body margin leaves a visible gutter on both
+     sides of every page; on a phone that is 16px of the 360px available. */
+  body { margin: 0; }
+
+  .app-content { min-width: 0; max-width: 100%; overflow-x: hidden; }
+
+  /* Pages use 20-24px side padding; a phone needs the width more. The page
+     root is always the first-level div under .app-content. */
+  .app-content > div {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  /* ── Grids ──────────────────────────────────────────────────────── */
+
+  /* Any explicit multi-column grid becomes a single column... */
+  .app-content [style*="grid-template-columns"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  /* ...except KPI-style rows of 3-4 small tiles, which fit two across. */
+  .app-content [style*="repeat(4, 1fr)"],
+  .app-content [style*="repeat(3, 1fr)"],
+  .app-content [style*="repeat(4, minmax"],
+  .app-content [style*="repeat(3, minmax"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  /* ...and auto-fit grids keep working but never demand more than the screen. */
+  .app-content [style*="auto-fit"],
+  .app-content [style*="auto-fill"] {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)) !important;
+  }
+  /* Calendars need their 7 day columns. */
+  .app-content [style*="repeat(7"] {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  }
+  .app-content [style*="grid-column"] { grid-column: auto !important; }
+
+  /* ── Flex rows ──────────────────────────────────────────────────── */
+
+  /* Header rows (title on the left, buttons on the right) wrap instead of overflowing. */
+  .app-content [style*="display: flex"][style*="space-between"] {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  /* Rows that were already asking to wrap should be allowed to shrink their children. */
+  .app-content [style*="flex-wrap: wrap"] > * { min-width: 0; }
+
+  /* ── Widths ─────────────────────────────────────────────────────── */
+
+  .app-content img, .app-content canvas, .app-content video { max-width: 100%; height: auto; }
+  .app-content pre, .app-content code { white-space: pre-wrap; word-break: break-word; }
+  .app-content input, .app-content select, .app-content textarea { max-width: 100%; box-sizing: border-box; }
+  /* Fixed-width form controls and panels (e.g. width: 260px search boxes). */
+  .app-content input[style*="width"], .app-content select[style*="width"] { max-width: 100%; }
+
+  /* Wide data tables scroll inside their own card instead of widening the page.
+     Cards already marked overflow:auto keep working; a bare table gets a scroll box. */
+  .app-content table { max-width: none; }
+  .app-content [style*="overflow: auto"],
+  .app-content [style*="overflow-x: auto"] { -webkit-overflow-scrolling: touch; max-width: 100%; }
+
+  /* ── Dialogs / drawers ──────────────────────────────────────────── */
+
+  /* Every full-screen overlay: the panel inside may never be wider or taller than the screen. */
+  [style*="position: fixed"][style*="inset: 0"] { padding: 12px !important; box-sizing: border-box; }
+  [style*="position: fixed"][style*="inset: 0"] > div {
+    width: auto !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+    max-height: 92vh;
+    max-height: 92dvh;
+  }
+  /* Side drawers (justify-content: flex-end) go full width. */
+  [style*="position: fixed"][style*="inset: 0"][style*="flex-end"] { padding: 0 !important; }
+  [style*="position: fixed"][style*="inset: 0"][style*="flex-end"] > div { width: 100% !important; max-height: none; }
+
+  /* ── Text and controls ──────────────────────────────────────────── */
+
+  /* 16px inputs stop iOS Safari zooming the page when a field is focused. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  select, textarea { font-size: 16px !important; }
+
+  .app-content h1 { font-size: 20px !important; }
+  .app-content h2 { overflow-wrap: anywhere; }
+  .app-content p, .app-content td, .app-content th, .app-content li, .app-content span, .app-content div {
+    overflow-wrap: break-word;
+  }
+
+  /* ── Data tables as cards ───────────────────────────────────────── */
+
+  /* Opt-in: <table data-cards>. A wide table is unreadable on a phone (columns
+     get squeezed to a few pixels or sit off-screen), so each row becomes a card
+     and each cell prints its column name beside the value. The names come from
+     src/utils/responsiveTables.js (copies the header text onto every cell as
+     data-label). Matrix-style tables are not marked and keep scrolling sideways. */
+  table[data-cards] {
+    display: block;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    table-layout: auto !important;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: transparent;
+  }
+  table[data-cards] > colgroup,
+  table[data-cards] > thead { display: none; }
+  table[data-cards] > tbody,
+  table[data-cards] > tfoot { display: block; }
+
+  table[data-cards] > tbody > tr {
+    display: block;
+    box-sizing: border-box;
+    margin: 0 0 10px;
+    padding: 4px 12px;
+    background: #fff;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.07);
+  }
+  table[data-cards] > tbody > tr > td {
+    display: block;
+    position: relative;
+    box-sizing: border-box;
+    width: auto !important;
+    max-width: none !important;
+    min-height: 20px;
+    padding: 8px 0 8px 38% !important;
+    border: 0 !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    text-align: left !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    overflow-wrap: anywhere;
+  }
+  table[data-cards] > tbody > tr > td:last-child { border-bottom: 0 !important; }
+
+  /* Column name, pinned to the left third of the card. */
+  table[data-cards] > tbody > tr > td[data-label]:not([data-label=""])::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    top: 9px;
+    width: 34%;
+    box-sizing: border-box;
+    padding-right: 8px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    line-height: 1.3;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+  }
+  /* Cells with no column name (checkbox / action columns) and full-width rows
+     (loading, empty, expanded detail panels) use the whole card width. */
+  table[data-cards] > tbody > tr > td:not([data-label]),
+  table[data-cards] > tbody > tr > td[data-label=""],
+  table[data-cards] > tbody > tr > td[colspan] { padding-left: 0 !important; }
+
+  /* An expanded detail row (colspan cell with no padding) hangs under the card above it. */
+  table[data-cards] > tbody > tr:has(> td[colspan][style*="padding: 0"]) {
+    margin-top: -8px;
+    padding: 0;
+    background: #fafbfc;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+
+  /* The wrapper around a card table must not clip it, scroll it separately, or
+     draw a second frame around the cards. */
+  *:has(> table[data-cards]) {
+    overflow: visible !important;
+    max-height: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: 0 !important;
+  }
+  /* Raw HTML fragments inside cells (AWS resource tables) stay scrollable. */
+  table[data-cards] td table:not([data-cards]) { display: block; max-width: 100%; overflow-x: auto; }
+}
+
+/* Tablets (769-1024px): the desktop sidebar is still on screen, so the content
+ * column is only ~530-780px wide. Four KPI tiles in one row get ~110-170px each
+ * and their text collapses, so show them two across. */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .app-content .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+
+/* Touch devices (phones and tablets, any width): comfortable tap targets. */
+@media (pointer: coarse) {
+  button, [role="button"], select,
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]) {
+    min-height: 36px;
+  }
+  input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; }
+}
+
+/* Small phones: tighten the biggest cards and tiles a little more. */
+@media (max-width: 400px) {
+  .app-content > div { padding-left: 10px !important; padding-right: 10px !important; }
+}

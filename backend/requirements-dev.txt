@@ -1,0 +1,5 @@
+-r requirements.txt
+pytest==8.3.3
+pytest-mock==3.14.0
+moto[dynamodb,ses,support,secretsmanager]==5.0.14
+freezegun==1.5.1

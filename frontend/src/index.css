@@ -1,0 +1,96 @@
+/* Global font stack — nothing set this anywhere before, so every browser
+   fell back to its default serif font (Times New Roman-ish), which is
+   why the whole portal read as "heavy"/dated despite the modern-looking
+   colors/spacing elsewhere. This is a system-font stack (no external
+   font file to fetch — matters for the Tauri/Capacitor-wrapped desktop/
+   mobile builds too, which shouldn't depend on network access just to
+   render text) that resolves to each OS's own clean UI sans-serif:
+   San Francisco on macOS/iOS, Segoe UI on Windows, Roboto on Android,
+   and a reasonable Linux fallback — the same "Inter-style" look
+   theme.js's docstring already describes, without adding a font-loading
+   dependency. Applied on html so every element inherits it by default;
+   individual monospace usages (ticket numbers, IPs, etc.) already set
+   their own fontFamily: 'monospace' inline and are unaffected. */
+html {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Global keyboard-focus ring — buttons/inputs/links had no visible focus
+   state before, so a keyboard (Tab-key) user had no way to see where
+   focus currently is. One consistent blue ring across every interactive
+   element, using :focus-visible (not plain :focus) so a *mouse* click
+   never shows the ring — it only appears for actual keyboard navigation,
+   matching how modern browsers/OSes already behave natively. outline
+   (not box-shadow) is used deliberately: it never affects layout/
+   spacing and draws outside the element's own border-radius clipping. */
+a:focus-visible, button:focus-visible, input:focus-visible,
+select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Global hover transition — most buttons/cards/links across the portal
+   change background/color instantly on hover (set inline via onMouseEnter/
+   onMouseLeave), which feels abrupt. This adds a short, consistent
+   transition to color-ish properties on every button/link/[role=button]
+   by default so hover state changes ease in instead of snapping,
+   without having to touch every single inline hover handler
+   individually. Explicit longer transitions (e.g. the sidebar's own
+   width/left transitions) are unaffected since they're set inline and
+   inline styles win over this stylesheet rule for the properties they
+   name. */
+button, a, [role="button"] {
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Shared entry animations for the login screen and the post-login welcome
+   banner. Plain CSS keyframes so they play identically in the plain web
+   build and inside the Tauri/Capacitor-wrapped desktop/mobile shells
+   (both just load this same React app in a webview — no native splash
+   screen work needed to satisfy "animation when someone opens the app"). */
+
+@keyframes loginFadeIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes logoPopIn {
+  0% { opacity: 0; transform: scale(0.55) rotate(-8deg); }
+  60% { opacity: 1; transform: scale(1.08) rotate(2deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+@keyframes welcomeSlideIn {
+  from { opacity: 0; transform: translateY(-16px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.login-card-animate {
+  animation: loginFadeIn 0.55s ease-out both;
+}
+
+.login-logo-animate {
+  animation: logoPopIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.welcome-banner-animate {
+  animation: welcomeSlideIn 0.4s ease-out both;
+}
+
+/* "Listening…" mic indicator dot on the AI Assistant tab's voice input
+   (AiAssistantPage.jsx) — simple pulsing red dot, no external library. */
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.3); }
+}
+
+/* Loading-skeleton shimmer used by Skeleton/SkeletonLines (theme.js) —
+   a gentle opacity pulse on the gray placeholder blocks that replace the
+   old plain "Loading…" text across the portal's pages. */
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

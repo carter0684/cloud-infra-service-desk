@@ -1,0 +1,96 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  Cloud Infra Job Portal - cross-account Bedrock invoke role.
+  Deploy in the BEDROCK account (100000000005), us-east-1. The portal's ECS task
+  role (account 100000000002) assumes this role (BEDROCK_ROLE_ARN) for:
+    * Claude Sonnet 5.5 through Converse  (us.anthropic.claude-sonnet-5-5)
+    * GPT-6.1 Terra through bedrock-mantle (Responses API + Bedrock Web Search)
+
+Parameters:
+  PortalAccountId:
+    Type: String
+    Default: "100000000002"
+    AllowedPattern: "^[0-9]{12}$"
+    Description: Account the Job Portal runs in.
+  PortalTaskRoleNamePattern:
+    Type: String
+    Default: "JobPortalComputeStack-JobPortalTaskRole*"
+    Description: >-
+      Name (wildcard allowed) of the ECS task role in the portal account. CDK appends
+      a hash to the name, so the trust is a pattern rather than a fixed ARN.
+  RoleName:
+    Type: String
+    Default: JobPortal-Bedrock-Invoke
+
+Resources:
+  BedrockInvokeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref RoleName
+      Description: Assumed by the Job Portal ECS task role to call Bedrock (Claude Sonnet 5.5, GPT-6.1 Terra).
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          # Account root + PrincipalArn condition: only the portal's task role can
+          # assume this role, and the role does not have to exist yet when this
+          # stack is created.
+          - Sid: PortalTaskRoleOnly
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:${AWS::Partition}:iam::${PortalAccountId}:root"
+            Action: sts:AssumeRole
+            Condition:
+              ArnLike:
+                "aws:PrincipalArn": !Sub "arn:${AWS::Partition}:iam::${PortalAccountId}:role/${PortalTaskRoleNamePattern}"
+      Policies:
+        - PolicyName: JobPortalBedrockInvoke
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # Converse needs InvokeModel on BOTH the inference profile and the
+              # underlying foundation model. The US profile routes to several US
+              # regions, hence the wildcard region on the foundation-model ARN.
+              - Sid: ClaudeSonnet55
+                Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                  - bedrock:InvokeModelWithResponseStream
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:bedrock:*::foundation-model/anthropic.claude-sonnet-5-5"
+                  - !Sub "arn:${AWS::Partition}:bedrock:*:${AWS::AccountId}:inference-profile/us.anthropic.claude-sonnet-5-5"
+              # bedrock-mantle checks its own IAM action, not bedrock:*.
+              - Sid: Gpt61TerraMantle
+                Effect: Allow
+                Action:
+                  - bedrock-mantle:CreateInference
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:bedrock-mantle:us-east-1:${AWS::AccountId}:project/*"
+              # Web Search served from the Bedrock web index / cache only.
+              - Sid: BedrockWebSearch
+                Effect: Allow
+                Action:
+                  - bedrock-websearch:InvokeSearch
+                  - bedrock-websearch:InvokeFetch
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:bedrock-websearch:us-east-1:*:*"
+              # The portal always sends external_web_access=false. Deny the live
+              # external fetch permission as defense in depth so a code change
+              # cannot let request data leave the AWS boundary.
+              - Sid: NoExternalWebAccess
+                Effect: Deny
+                Action:
+                  - bedrock-websearch:ExternalWebAccess
+                Resource: "*"
+      Tags:
+        - Key: Project
+          Value: job-portal
+        - Key: Environment
+          Value: production
+        - Key: Owner
+          Value: cloud-infra
+
+Outputs:
+  RoleArn:
+    Description: Value for the portal's BEDROCK_ROLE_ARN environment variable.
+    Value: !GetAtt BedrockInvokeRole.Arn

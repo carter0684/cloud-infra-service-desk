@@ -1,0 +1,22 @@
+{
+  "account_id": "111111111111",
+  "region": "us-east-1",
+  "org_name": "Example Corp",
+  "org_email_domain": "example.com",
+  "custom_domain": "portal.example.com",
+  "api_domain": "portal-api.example.com",
+  "acm_certificate_arn": "arn:aws:acm:us-east-1:111111111111:certificate/00000000-0000-0000-0000-000000000000",
+  "azure_tenant_id": "00000000-0000-0000-0000-000000000000",
+  "azure_client_id": "00000000-0000-0000-0000-000000000000",
+  "azure_client_secret_arn": "arn:aws:secretsmanager:us-east-1:111111111111:secret:job-portal/azure-ad-client-secret-AbCdEf",
+  "seed_admin_emails": "admin@example.com",
+  "seed_member_emails": "",
+  "ses_sender_address": "portal@example.com",
+  "freshservice_domain": "",
+  "bedrock_account_id": "",
+  "core_account_id": "",
+  "enabled_features": "",
+  "extra_env": {
+    "KNOWN_BUSINESS_UNITS": "Platform,Product"
+  }
+}

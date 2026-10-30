@@ -1,0 +1,178 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Website monitor - regional probe. One CloudWatch Synthetics canary that checks every
+  site from this Region and reports to the central bucket / SNS topic.
+  The site list is not part of this stack: the canary reads config/sites.json from the central
+  bucket on every run (edited in the Cloud Infra Service Desk portal).
+  This is a source template: build.py injects the canary script, deploy dist/regional.yaml.
+
+Parameters:
+  RegionKey:
+    Type: String
+    Description: Short key used in result file names and the canary name (e.g. us, uk, sg, in, jp).
+    AllowedPattern: '^[a-z]{2,6}$'
+  RegionLabel:
+    Type: String
+    Description: Human readable probe location shown in alerts and the dashboard.
+  CentralBucketName:
+    Type: String
+  CentralRegion:
+    Type: String
+  AlertTopicArn:
+    Type: String
+  ScheduleMinutes:
+    Type: Number
+    Default: 5
+    AllowedValues: [5, 10, 15, 30, 60]
+  FailThreshold:
+    Type: Number
+    Default: 3
+    MinValue: 1
+    MaxValue: 10
+    Description: Consecutive failed runs before a DOWN alert is sent.
+  RuntimeVersion:
+    Type: String
+    Default: syn-nodejs-puppeteer-17.0
+  ArtifactRetentionDays:
+    Type: Number
+    Default: 30
+
+Resources:
+  ArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'webmon-artifacts-${AWS::AccountId}-${AWS::Region}'
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: expire-artifacts
+            Status: Enabled
+            ExpirationInDays: !Ref ArtifactRetentionDays
+
+  ArtifactBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ArtifactBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:*'
+            Resource:
+              - !GetAtt ArtifactBucket.Arn
+              - !Sub '${ArtifactBucket.Arn}/*'
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
+
+  CanaryRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: webmon-canary
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: RegionalArtifacts
+                Effect: Allow
+                Action: 's3:PutObject'
+                Resource: !Sub '${ArtifactBucket.Arn}/*'
+              - Sid: SyntheticsBucketLookup
+                Effect: Allow
+                Action: 's3:GetBucketLocation'
+                Resource: !GetAtt ArtifactBucket.Arn
+              - Sid: SyntheticsListBuckets
+                Effect: Allow
+                Action: 's3:ListAllMyBuckets'
+                Resource: '*'
+              - Sid: SyntheticsMetrics
+                Effect: Allow
+                Action: 'cloudwatch:PutMetricData'
+                Resource: '*'
+                Condition:
+                  StringEquals:
+                    'cloudwatch:namespace': CloudWatchSynthetics
+              - Sid: Logs
+                Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: !Sub 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/cwsyn-*'
+              - Sid: CentralReadStateAndSiteList
+                Effect: Allow
+                Action: 's3:GetObject'
+                Resource:
+                  - !Sub 'arn:${AWS::Partition}:s3:::${CentralBucketName}/results/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::${CentralBucketName}/config/sites.json'
+              - Sid: CentralListState
+                Effect: Allow
+                Action: 's3:ListBucket'
+                Resource: !Sub 'arn:${AWS::Partition}:s3:::${CentralBucketName}'
+                Condition:
+                  StringLike:
+                    's3:prefix': 'results/*'
+              - Sid: CentralWriteResults
+                Effect: Allow
+                Action: 's3:PutObject'
+                Resource:
+                  - !Sub 'arn:${AWS::Partition}:s3:::${CentralBucketName}/results/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::${CentralBucketName}/screenshots/*'
+              - Sid: PublishAlerts
+                Effect: Allow
+                Action: 'sns:Publish'
+                Resource: !Ref AlertTopicArn
+
+  Canary:
+    Type: AWS::Synthetics::Canary
+    Properties:
+      Name: !Sub 'webmon-${RegionKey}'
+      ExecutionRoleArn: !GetAtt CanaryRole.Arn
+      RuntimeVersion: !Ref RuntimeVersion
+      ArtifactS3Location: !Sub 's3://${ArtifactBucket}/canary'
+      StartCanaryAfterCreation: true
+      SuccessRetentionPeriod: 7
+      FailureRetentionPeriod: 30
+      Schedule:
+        Expression: !Sub 'rate(${ScheduleMinutes} minutes)'
+        DurationInSeconds: '0'
+      RunConfig:
+        TimeoutInSeconds: 280
+        ActiveTracing: false
+        EnvironmentVariables:
+          REGION_KEY: !Ref RegionKey
+          REGION_LABEL: !Ref RegionLabel
+          CENTRAL_BUCKET: !Ref CentralBucketName
+          CENTRAL_REGION: !Ref CentralRegion
+          ALERT_TOPIC_ARN: !Ref AlertTopicArn
+          FAIL_THRESHOLD: !Ref FailThreshold
+      Code:
+        Handler: index.handler
+        Script: |
+          __CANARY_SCRIPT__
+
+Outputs:
+  CanaryName:
+    Value: !Ref Canary
+  ArtifactBucketName:
+    Value: !Ref ArtifactBucket
